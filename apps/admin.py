@@ -7,10 +7,42 @@ from django.forms import forms
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import path
+from django.utils.html import format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 
-from apps.models import Model, User
+from apps.models import User, Model
+
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    list_display = ['username', 'email', 'first_name', 'last_name', 'is_staff', 'user_image']
+
+    fieldsets = (
+        (None, {"fields": ("username", "password")}),
+        (_("Personal info"), {"fields": ('first_name', 'last_name', 'email', 'image')}),
+        (
+            _("Permissions"),
+            {
+                "fields": (
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "groups",
+                    "user_permissions",
+                ),
+            },
+        ),
+        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
+    )
+
+    def user_image(self, obj: User):
+        return format_html(
+            f'<a href="{obj.pk}">'
+            f'<img src="{obj.image.url}" width="35" height="35" style="object-fit: cover;"></a>'
+        )
+
+    user_image.short_description = 'Image'
 
 
 class CsvImportForm(forms.Form):
@@ -29,19 +61,15 @@ class ExportCsvMixin:
         writer.writerow(field_names)
         for obj in queryset:
             row = writer.writerow([getattr(obj, field) for field in field_names])
-
         return response
 
     export_as_csv.short_description = "Export Selected"
 
 
 @admin.register(Model)
-class PostAdmin(admin.ModelAdmin, ExportCsvMixin):
+class ModelAdmin(admin.ModelAdmin, ExportCsvMixin):
     change_list_template = "admin/change_list.html"
-    list_display = ['id', 'custom_title']
-
-    def custom_title(self, obj):
-        return ' '.join(obj.title.split()[:4])
+    list_display = ['id', 'title']
 
     def get_urls(self):
         urls = super().get_urls()
@@ -60,21 +88,20 @@ class PostAdmin(admin.ModelAdmin, ExportCsvMixin):
             result = []
             for row in reader:
                 result.append(Model(
-                    user_id=int(row[0]),
-                    pk=int(row[1]),
-                    title=row[2],
-                    body=row[3]
+                    pk=int(row[0]),
+                    title=row[1],
+                    image=row[2],
+                    description=row[3],
+                    quantity=row[4],
+                    price=row[5]
                 ))
 
             Model.objects.bulk_create(result)
-
             self.message_user(request, "Your csv file has been imported")
             return redirect("..")
         form = CsvImportForm()
         payload = {"form": form}
         return render(request, "apps/csv_form.html", payload)
-
-    custom_title.short_description = 'Sarlavha'
 
 
 @admin.register(User)

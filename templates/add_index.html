@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Add Product</title>
+</head>
+<body>
+
+<h3>
+    <a href="{% url 'index' %}">Orqaga</a>
+</h3>
+<h1>add item</h1>
+
+<form action="{% url 'add_index' %}" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name"><br><br>
+
+    <label for="location">Location:</label><br>
+    <input type="text" id="location" name="location"><br><br>
+
+    <label for="description">Description:</label><br>
+    <input type="text" id="description" name="description"><br><br>
+
+    <label for="image">Image:</label><br>
+    <input type="file" multiple id="image" name="image"><br><br>
+
+    <label for="money">Money:</label><br>
+    <input type="text" id="money_hour" name="money_hour"><br><br>
+
+    <button type="submit">Add</button>
+</form>
+</body>
+</html>
